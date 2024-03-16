@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, UploadFile, File
 
-from backend.cipher.modes.ecb import ecb_decrypt, ecb_encrypt
+from backend.cipher.modes import ecb_decrypt, ecb_encrypt
 
 router = APIRouter(
     prefix="/ecb",

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, UploadFile, File
 
-from backend.cipher.modes.cbc import cbc_decrypt, cbc_encrypt
+from backend.cipher.modes import cbc_decrypt, cbc_encrypt
 
 router = APIRouter(
     prefix="/cbc",

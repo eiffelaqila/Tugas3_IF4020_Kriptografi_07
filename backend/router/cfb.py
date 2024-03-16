@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, UploadFile, File
 
-from backend.cipher.modes.cfb import cfb_decrypt, cfb_encrypt
+from backend.cipher.modes import cfb_decrypt, cfb_encrypt
 
 router = APIRouter(
     prefix="/cfb",

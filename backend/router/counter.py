@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, UploadFile, File
 
-from backend.cipher.modes.counter import counter_decrypt, counter_encrypt
+from backend.cipher.modes import counter_decrypt, counter_encrypt
 
 router = APIRouter(
     prefix="/counter",

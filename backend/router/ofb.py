@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, UploadFile, File
 
-from backend.cipher.modes.ofb import ofb_decrypt, ofb_encrypt
+from backend.cipher.modes import ofb_decrypt, ofb_encrypt
 
 router = APIRouter(
     prefix="/ofb",
