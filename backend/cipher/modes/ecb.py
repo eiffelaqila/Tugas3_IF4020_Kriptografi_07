@@ -1,5 +1,5 @@
 # Import fungsi enkripsi dan dekripsi dari cipher
-from cipher import encrypt, decrypt
+from backend.cipher import encrypt, decrypt
 
 # Fungsi untuk enkripsi menggunakan mode ECB
 def ecb_encrypt_block(plaintext_block, key):

@@ -1,5 +1,5 @@
 # Import fungsi enkripsi dan dekripsi dari cipher
-from cipher import encrypt, decrypt
+from backend.cipher import encrypt, decrypt
 
 # Fungsi untuk enkripsi pesan menggunakan mode CFB 8 bit
 def cfb_encrypt(plaintext, key, iv):

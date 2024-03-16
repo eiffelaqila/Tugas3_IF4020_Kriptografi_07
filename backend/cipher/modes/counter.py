@@ -1,5 +1,5 @@
 # Import fungsi enkripsi dari cipher
-from cipher import encrypt
+from backend.cipher import encrypt, decrypt
 
 # Fungsi untuk menghasilkan nilai counter berikutnya
 def generate_next_counter(counter):

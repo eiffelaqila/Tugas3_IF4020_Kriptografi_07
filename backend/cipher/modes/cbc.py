@@ -1,5 +1,5 @@
 # Import fungsi enkripsi dan dekripsi dari cipher
-from cipher import encrypt, decrypt
+from backend.cipher import encrypt, decrypt
 
 # Fungsi untuk enkripsi satu blok pesan menggunakan mode CBC
 def cbc_encrypt_block(plaintext_block, key, iv):
