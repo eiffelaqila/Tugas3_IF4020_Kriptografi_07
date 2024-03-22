@@ -30,6 +30,7 @@ function App() {
     data.keySize = d.keySize;
     data.key = d.key;
     
+    console.log(data);
     return data;
   }
 
@@ -59,7 +60,7 @@ function App() {
     setData(newData);
   }
 
-  const isKeyValid = (key, keySize) => key.length === keySize/8;
+  const isLengthValid = (str, bitSize) => str.length === bitSize/8;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,8 +69,13 @@ function App() {
     const cipherType = e.nativeEvent.submitter.value;
     setCipherType(cipherType);
 
-    if (!isKeyValid(mappedData.key, mappedData.keySize)) {
+    if (!isLengthValid(mappedData.key, mappedData.keySize)) {
       setError(`Key should be ${mappedData.keySize/8} characters long`);
+      return;
+    }
+
+    if (["cbc", "ofb", "cfb"].includes(data.cipherMode) && !isLengthValid(mappedData.iv, 128)) {
+      setError(`Initialization vector should be 16 characters long`);
       return;
     }
 
