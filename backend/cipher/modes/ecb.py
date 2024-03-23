@@ -37,7 +37,8 @@ def ecb_decrypt(ciphertext: str, key: str) -> str:
     key        : external key
     """
     plaintext = b''
-    ciphertext = bytes.fromhex(ciphertext)
+    if type(ciphertext) == str:
+      ciphertext = bytes.fromhex(ciphertext)
     # Membagi ciphertext menjadi blok-blok 128 bit
     for i in range(0, len(ciphertext), 16):
         ciphertext_block = ciphertext[i:i+16]

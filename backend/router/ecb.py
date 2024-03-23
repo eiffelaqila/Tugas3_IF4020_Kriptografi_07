@@ -1,3 +1,6 @@
+import base64
+import binascii
+import time
 from typing import Optional
 from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -19,16 +22,18 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
         key = key['key']
 
         # read file content
-        content = await file.read()
-        ciphertext = content.decode('utf-8')
+        plaintext = await file.read()
+        plaintext = plaintext.decode('utf-8')
 
-        # calculate plaintext
-        plaintext = ecb_decrypt(ciphertext, key)
-        plaintext = plaintext.encode('utf-8')
+        # calculate ciphertext
+        start_time = time.time()
+        ciphertext = ecb_encrypt(plaintext, key)
+        end_time = time.time()
 
         return StreamingResponse(
-          iter([plaintext]),
+          iter([ciphertext]),
           media_type="application/octet-stream",
+          headers={"X-Response-Time": str(end_time - start_time)}
         )
 
       # get request body
@@ -36,8 +41,15 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get plaintext and key from request body
       plaintext, key = body['plaintext'], body['key']
 
+      start_time = time.time()
+      ciphertext = ecb_encrypt(plaintext, key)
+      end_time = time.time()
+
       return JSONResponse(
-          content={"ciphertext": ecb_encrypt(plaintext, key)},
+          content={
+            "ciphertext": binascii.hexlify(ciphertext).decode('utf-8'),
+            "time": end_time - start_time
+          },
           status_code=200
       )
 
@@ -56,16 +68,18 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
         key = key['key']
 
         # read file content
-        content = await file.read()
-        ciphertext = content.decode('utf-8')
+        ciphertext = await file.read()
 
         # calculate plaintext
+        start_time = time.time()
         plaintext = ecb_decrypt(ciphertext, key)
+        end_time = time.time()
         plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
           iter([plaintext]),
           media_type="application/octet-stream",
+          headers={"X-Response-Time": str(end_time - start_time)}
         )
 
       # get request body
@@ -73,12 +87,20 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get ciphertext and key from request body
       ciphertext, key = body['ciphertext'], body['key']
 
+      start_time = time.time()
+      plaintext = ecb_decrypt(ciphertext, key)
+      end_time = time.time()
+
       return JSONResponse(
-          content={"ciphertext": ecb_decrypt(ciphertext, key)},
+          content={
+              "plaintext": plaintext,
+              "time": end_time - start_time
+          },
           status_code=200
       )
 
     except Exception as e:
+      print(e)
       # return error message
       return JSONResponse(
           content={"error": str(e)},

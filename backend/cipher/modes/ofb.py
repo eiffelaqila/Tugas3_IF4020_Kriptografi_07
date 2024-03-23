@@ -33,7 +33,8 @@ def ofb_decrypt(ciphertext: str, key: str, iv: str) -> str:
     iv         : initialization vector
     """
     plaintext = b''
-    ciphertext = bytes.fromhex(ciphertext)
+    if type(ciphertext) == str:
+      ciphertext = bytes.fromhex(ciphertext)
     # Menginisialisasi IV untuk blok pertama
     previous_iv = bytes(iv, 'utf-8')
     # Iterasi melalui setiap byte dalam plaintext

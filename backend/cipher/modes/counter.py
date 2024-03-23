@@ -35,7 +35,8 @@ def counter_encrypt(plaintext: str, key: str, counter: str):
 # Fungsi untuk dekripsi pesan menggunakan mode Counter (sama dengan enkripsi dalam Counter)
 def counter_decrypt(ciphertext, key, counter):
     plaintext = b''
-    ciphertext = bytes.fromhex(ciphertext)
+    if type(ciphertext) == str:
+      ciphertext = bytes.fromhex(ciphertext)
     counter = int.from_bytes(bytes(counter, 'utf-8'), 'big')
     # Iterasi melalui setiap blok dalam plaintext
     for i in range(0, len(ciphertext), 16):

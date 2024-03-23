@@ -48,7 +48,8 @@ def cbc_decrypt(ciphertext: str, key: str, iv: str) -> str:
     iv         : initialization vector
     """
     plaintext = b''
-    ciphertext = bytes.fromhex(ciphertext)
+    if type(ciphertext) == str:
+      ciphertext = bytes.fromhex(ciphertext)
     # Menginisialisasi IV untuk blok pertama
     previous_cipher_block = bytes(iv, 'utf-8')
     # Membagi ciphertext menjadi blok-blok 128 bit

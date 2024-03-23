@@ -1,3 +1,5 @@
+import binascii
+import time
 from typing import Optional
 from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -25,12 +27,14 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
         plaintext = content.decode('utf-8')
 
         # calculate ciphertext
+        start_time = time.time()
         ciphertext = ofb_encrypt(plaintext, key, iv)
-        ciphertext = ciphertext.encode('utf-8')
+        end_time = time.time()
 
         return StreamingResponse(
           iter([ciphertext]),
           media_type="application/octet-stream",
+          headers={"X-Response-Time": str(end_time - start_time)}
         )
 
       # get request body
@@ -38,8 +42,15 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get plaintext and key from request body
       plaintext, key, iv = body['plaintext'], body['key'], body['iv']
 
+      start_time = time.time()
+      ciphertext = ofb_encrypt(plaintext, key, iv)
+      end_time = time.time()
+
       return JSONResponse(
-          content={"ciphertext": ofb_encrypt(plaintext, key, iv)},
+          content={
+              "ciphertext": binascii.hexlify(ciphertext).decode('utf-8'),
+              "time": end_time - start_time
+          },
           status_code=200
       )
 
@@ -61,15 +72,17 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
 
         # read file content
         content = await file.read()
-        ciphertext = content.decode('utf-8')
 
         # calculate plaintext
+        start_time = time.time()
         plaintext = ofb_decrypt(ciphertext, key, iv)
+        end_time = time.time()
         plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
           iter([plaintext]),
           media_type="application/octet-stream",
+          headers={"X-Response-Time": str(end_time - start_time)}
         )
 
       # get request body
@@ -77,8 +90,15 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get ciphertext and key from request body
       ciphertext, key, iv = body['ciphertext'], body['key'], body['iv']
 
+      start_time = time.time()
+      plaintext = ofb_decrypt(ciphertext, key, iv)
+      end_time = time.time()
+
       return JSONResponse(
-          content={"ciphertext": ofb_decrypt(ciphertext, key, iv)},
+          content={
+              "plaintext": plaintext,
+              "time": end_time - start_time
+          },
           status_code=200
       )
 

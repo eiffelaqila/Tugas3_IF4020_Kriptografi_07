@@ -18,7 +18,7 @@ def cfb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
         # Enkripsi blok sebelumnya untuk digunakan sebagai IV
         encrypted_iv = encrypt(previous_ciphertext_block, bytes(key, 'utf-8'))
         # XOR byte plaintext dengan byte hasil enkripsi IV untuk mendapatkan byte ciphertext
-        ciphertext_byte = bytes([p ^ i for p, i in zip(bytes(byte, 'utf-8'), int.to_bytes(encrypted_iv[0], 1, 'big'))]) 
+        ciphertext_byte = bytes([p ^ i for p, i in zip(bytes(byte, 'utf-8'), int.to_bytes(encrypted_iv[0], 1, 'big'))])
         # Tambahkan byte ciphertext ke ciphertext
         ciphertext += ciphertext_byte
         # Perbarui blok sebelumnya dengan byte ciphertext yang baru saja dihasilkan
@@ -34,7 +34,8 @@ def cfb_decrypt(ciphertext: str, key: str, iv: str) -> str:
     iv         : initialization vector
     """
     plaintext = b''
-    ciphertext = bytes.fromhex(ciphertext)
+    if type(ciphertext) == str:
+      ciphertext = bytes.fromhex(ciphertext)
     # Menginisialisasi IV untuk blok pertama
     previous_ciphertext_block = bytes(iv, 'utf-8')
     # Iterasi melalui setiap byte dalam ciphertext
