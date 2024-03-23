@@ -20,12 +20,15 @@ def counter_encrypt_block(plaintext_block: bytes, key: bytes, counter: int):
     return ciphertext_block, counter
 
 # Fungsi untuk enkripsi pesan menggunakan mode Counter
-def counter_encrypt(plaintext: str, key: str, counter: str):
+def counter_encrypt(plaintext: bytes, key: str, counter: str) -> bytes:
     ciphertext = b''
+    if (len(plaintext) % 16 > 0):
+        plaintext = plaintext + bytes(16 - len(plaintext) % 16)
+
     counter = int.from_bytes(bytes(counter, 'utf-8'), 'big')
     # Iterasi melalui setiap blok dalam plaintext
     for i in range(0, len(plaintext), 16):
-        plaintext_block = bytes(plaintext[i:i+16], 'utf-8')
+        plaintext_block = plaintext[i:i+16]
         # Enkripsi blok pesan menggunakan mode Counter
         ciphertext_block, counter = counter_encrypt_block(plaintext_block, bytes(key, 'utf-8'), counter)
         # Tambahkan blok ciphertext ke ciphertext
@@ -33,10 +36,8 @@ def counter_encrypt(plaintext: str, key: str, counter: str):
     return ciphertext
 
 # Fungsi untuk dekripsi pesan menggunakan mode Counter (sama dengan enkripsi dalam Counter)
-def counter_decrypt(ciphertext, key, counter):
+def counter_decrypt(ciphertext: bytes, key: str, counter: str) -> bytes:
     plaintext = b''
-    if type(ciphertext) == str:
-      ciphertext = bytes.fromhex(ciphertext)
     counter = int.from_bytes(bytes(counter, 'utf-8'), 'big')
     # Iterasi melalui setiap blok dalam plaintext
     for i in range(0, len(ciphertext), 16):
@@ -45,7 +46,8 @@ def counter_decrypt(ciphertext, key, counter):
         plaintext_block, counter = counter_encrypt_block(ciphertext_block, bytes(key, 'utf-8'), counter)
         # Tambahkan blok ciphertext ke plaintext
         plaintext += plaintext_block
-    return plaintext.decode('utf-8')
+    plaintext = plaintext.rstrip(b'\x00')
+    return plaintext
 
 # Test
 import string
@@ -66,18 +68,18 @@ if __name__ == '__main__':
     print("Counter:\t\t", counter)
 
     start_time = time.time()
-    encrypted_text = counter_encrypt(plain_text, key, counter)
+    encrypted_text = counter_encrypt(bytes(plain_text, 'utf-8'), key, counter)
     end_time = time.time()
     print("\nEncrypting...")
     print("Encrypted hex:\t", bytes.hex(encrypted_text))
     print("Time to encrypt:\t", end_time - start_time)
 
     start_time = time.time()
-    decrypted_text = counter_decrypt(bytes.hex(encrypted_text), key, counter)
+    decrypted_text = counter_decrypt(encrypted_text, key, counter)
     end_time = time.time()
     print("\nDecrypting...")
-    print("Decrypted text:\t", decrypted_text)
+    print("Decrypted text:\t", decrypted_text.decode('utf-8'))
     print("Time to decrypt:\t", end_time - start_time)
 
-    print("\nResult:\t", plain_text == decrypted_text)
+    print("\nResult:\t", plain_text == decrypted_text.decode('utf-8'))
     print("===================================================")

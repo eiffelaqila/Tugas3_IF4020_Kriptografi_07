@@ -23,8 +23,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
         counter = counter['counter']
 
         # read file content
-        content = await file.read()
-        plaintext = content.decode('utf-8')
+        plaintext = await file.read()
 
         # calculate ciphertext
         start_time = time.time()
@@ -43,7 +42,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       plaintext, key, counter = body['plaintext'], body['key'], body['counter']
 
       start_time = time.time()
-      ciphertext = counter_encrypt(plaintext, key, counter)
+      ciphertext = counter_encrypt(bytes(plaintext, 'utf-8'), key, counter)
       end_time = time.time()
 
       return JSONResponse(
@@ -71,13 +70,12 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
         counter = counter['counter']
 
         # read file content
-        content = await file.read()
+        ciphertext = await file.read()
 
         # calculate plaintext
         start_time = time.time()
         plaintext = counter_decrypt(ciphertext, key, counter)
         end_time = time.time()
-        plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
           iter([plaintext]),
@@ -91,12 +89,12 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       ciphertext, key, counter = body['ciphertext'], body['key'], body['counter']
 
       start_time = time.time()
-      plaintext = counter_decrypt(ciphertext, key, counter)
+      plaintext = counter_decrypt(bytes.fromhex(ciphertext), key, counter)
       end_time = time.time()
 
       return JSONResponse(
           content={
-              "plaintext": plaintext,
+              "plaintext": plaintext.decode('utf-8'),
               "time": end_time - start_time
           },
           status_code=200

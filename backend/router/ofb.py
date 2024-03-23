@@ -23,8 +23,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
         iv = iv['iv']
 
         # read file content
-        content = await file.read()
-        plaintext = content.decode('utf-8')
+        plaintext = await file.read()
 
         # calculate ciphertext
         start_time = time.time()
@@ -43,7 +42,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       plaintext, key, iv = body['plaintext'], body['key'], body['iv']
 
       start_time = time.time()
-      ciphertext = ofb_encrypt(plaintext, key, iv)
+      ciphertext = ofb_encrypt(bytes(plaintext, 'utf-8'), key, iv)
       end_time = time.time()
 
       return JSONResponse(
@@ -71,13 +70,12 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
         iv = iv['iv']
 
         # read file content
-        content = await file.read()
+        ciphertext = await file.read()
 
         # calculate plaintext
         start_time = time.time()
         plaintext = ofb_decrypt(ciphertext, key, iv)
         end_time = time.time()
-        plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
           iter([plaintext]),
@@ -91,12 +89,12 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       ciphertext, key, iv = body['ciphertext'], body['key'], body['iv']
 
       start_time = time.time()
-      plaintext = ofb_decrypt(ciphertext, key, iv)
+      plaintext = ofb_decrypt(bytes.fromhex(ciphertext), key, iv)
       end_time = time.time()
 
       return JSONResponse(
           content={
-              "plaintext": plaintext,
+              "plaintext": plaintext.decode('utf-8'),
               "time": end_time - start_time
           },
           status_code=200

@@ -3,7 +3,7 @@ from backend.cipher import encrypt, decrypt
 from backend.utils import *
 
 # Fungsi untuk enkripsi pesan menggunakan mode CFB 8 bit
-def cfb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
+def cfb_encrypt(plaintext: bytes, key: str, iv: str) -> bytes:
     """RamadhanCipher cfb-mode encryption function
 
     plaintext : text to be encrypted
@@ -11,6 +11,8 @@ def cfb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
     iv        : initialization vector
     """
     ciphertext = b''
+    if (len(plaintext) % 16 > 0):
+        plaintext = plaintext + bytes(16 - len(plaintext) % 16)
     # Menginisialisasi IV untuk blok pertama
     previous_ciphertext_block = bytes(iv, 'utf-8')
     # Iterasi melalui setiap byte dalam plaintext
@@ -18,7 +20,8 @@ def cfb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
         # Enkripsi blok sebelumnya untuk digunakan sebagai IV
         encrypted_iv = encrypt(previous_ciphertext_block, bytes(key, 'utf-8'))
         # XOR byte plaintext dengan byte hasil enkripsi IV untuk mendapatkan byte ciphertext
-        ciphertext_byte = bytes([p ^ i for p, i in zip(bytes(byte, 'utf-8'), int.to_bytes(encrypted_iv[0], 1, 'big'))])
+        # ciphertext_byte = bytes([p ^ i for p, i in zip(bytes(byte, 'utf-8'), int.to_bytes(encrypted_iv[0], 1, 'big'))])
+        ciphertext_byte = bytes([p ^ i for p, i in zip(int.to_bytes(byte, 1, 'big'), int.to_bytes(encrypted_iv[0], 1, 'big'))])
         # Tambahkan byte ciphertext ke ciphertext
         ciphertext += ciphertext_byte
         # Perbarui blok sebelumnya dengan byte ciphertext yang baru saja dihasilkan
@@ -26,7 +29,7 @@ def cfb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
     return ciphertext
 
 # Fungsi untuk dekripsi pesan menggunakan mode CFB 8 bit
-def cfb_decrypt(ciphertext: str, key: str, iv: str) -> str:
+def cfb_decrypt(ciphertext: bytes, key: str, iv: str) -> bytes:
     """RamadhanCipher cfb-mode decryption function
 
     ciphertext : text (in hex) to be decrypted
@@ -34,8 +37,6 @@ def cfb_decrypt(ciphertext: str, key: str, iv: str) -> str:
     iv         : initialization vector
     """
     plaintext = b''
-    if type(ciphertext) == str:
-      ciphertext = bytes.fromhex(ciphertext)
     # Menginisialisasi IV untuk blok pertama
     previous_ciphertext_block = bytes(iv, 'utf-8')
     # Iterasi melalui setiap byte dalam ciphertext
@@ -48,7 +49,8 @@ def cfb_decrypt(ciphertext: str, key: str, iv: str) -> str:
         plaintext += plaintext_byte
         # Perbarui blok sebelumnya dengan byte ciphertext yang baru saja dihasilkan
         previous_ciphertext_block = previous_ciphertext_block[1:] + int.to_bytes(byte, 1, 'big')
-    return plaintext.decode('utf-8')
+    plaintext = plaintext.rstrip(b'\x00')
+    return plaintext
 
 # Test
 import string
@@ -69,18 +71,18 @@ if __name__ == '__main__':
     print("IV:\t\t", iv)
 
     start_time = time.time()
-    encrypted_text = cfb_encrypt(plain_text, key, iv)
+    encrypted_text = cfb_encrypt(bytes(plain_text, 'utf-8'), key, iv)
     end_time = time.time()
     print("\nEncrypting...")
     print("Encrypted hex:\t", bytes.hex(encrypted_text))
     print("Time to encrypt:\t", end_time - start_time)
 
     start_time = time.time()
-    decrypted_text = cfb_decrypt(bytes.hex(encrypted_text), key, iv)
+    decrypted_text = cfb_decrypt(encrypted_text, key, iv)
     end_time = time.time()
     print("\nDecrypting...")
-    print("Decrypted text:\t", decrypted_text)
+    print("Decrypted text:\t", decrypted_text.decode('utf-8'))
     print("Time to decrypt:\t", end_time - start_time)
 
-    print("\nResult:\t", plain_text == decrypted_text)
+    print("\nResult:\t", plain_text == decrypted_text.decode('utf-8'))
     print("===============================================")

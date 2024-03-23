@@ -14,7 +14,7 @@ router = APIRouter(
 
 @router.post("/encrypt")
 async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
-    try:
+    # try:
       if file:
         #  get key and iv from request form data
         key = await request.form()
@@ -23,8 +23,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
         iv = iv['iv']
 
         # read file content
-        content = await file.read()
-        plaintext = content.decode('utf-8')
+        plaintext = await file.read()
 
         # calculate ciphertext
         start_time = time.time()
@@ -43,7 +42,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       plaintext, key, iv = body['plaintext'], body['key'], body['iv']
 
       start_time = time.time()
-      ciphertext = cfb_encrypt(plaintext, key, iv)
+      ciphertext = cfb_encrypt(bytes(plaintext, 'utf-8'), key, iv)
       end_time = time.time()
 
       return JSONResponse(
@@ -54,11 +53,11 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
           status_code=200
       )
 
-    except Exception as e:
-      # return error message
-      return JSONResponse(
-          content={"error": str(e)},
-      )
+    # except Exception as e:
+    #   # return error message
+    #   return JSONResponse(
+    #       content={"error": str(e)},
+    #   )
 
 @router.post("/decrypt")
 async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
@@ -77,7 +76,6 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
         start_time = time.time()
         plaintext = cfb_decrypt(ciphertext, key, iv)
         end_time = time.time()
-        plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
           iter([plaintext]),
@@ -91,12 +89,12 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       ciphertext, key, iv = body['ciphertext'], body['key'], body['iv']
 
       start_time = time.time()
-      plaintext = cfb_decrypt(ciphertext, key, iv)
+      plaintext = cfb_decrypt(bytes.fromhex(ciphertext), key, iv)
       end_time = time.time()
 
       return JSONResponse(
           content={
-              "plaintext": plaintext,
+              "plaintext": plaintext.decode('utf-8'),
               "time": end_time - start_time
           },
           status_code=200

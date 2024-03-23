@@ -2,7 +2,7 @@
 from backend.cipher import encrypt, decrypt
 
 # Fungsi untuk enkripsi pesan menggunakan mode OFB 8 bit
-def ofb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
+def ofb_encrypt(plaintext: bytes, key: str, iv: str) -> bytes:
     """RamadhanCipher ofb-mode encryption function
 
     plaintext : text to be encrypted
@@ -10,6 +10,8 @@ def ofb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
     iv        : initialization vector
     """
     ciphertext = b''
+    if (len(plaintext) % 16 > 0):
+        plaintext = plaintext + bytes(16 - len(plaintext) % 16)
     # Menginisialisasi IV untuk blok pertama
     previous_iv = bytes(iv, 'utf-8')
     # Iterasi melalui setiap byte dalam plaintext
@@ -17,7 +19,7 @@ def ofb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
         # Enkripsi IV untuk digunakan sebagai keystream
         keystream = encrypt(previous_iv, bytes(key, 'utf-8'))
         # XOR byte plaintext dengan byte keystream untuk mendapatkan byte ciphertext
-        ciphertext_byte = bytes([p ^ i for p, i in zip(bytes(byte, 'utf-8'), int.to_bytes(keystream[0], 1, 'big'))])
+        ciphertext_byte = bytes([p ^ i for p, i in zip(int.to_bytes(byte, 1, 'big'), int.to_bytes(keystream[0], 1, 'big'))])
         # Tambahkan byte ciphertext ke ciphertext
         ciphertext += ciphertext_byte
         # Perbarui IV dengan keystream yang baru saja dihasilkan
@@ -25,7 +27,7 @@ def ofb_encrypt(plaintext: str, key: str, iv: str) -> bytes:
     return ciphertext
 
 # Fungsi untuk dekripsi pesan menggunakan mode OFB 8 bit
-def ofb_decrypt(ciphertext: str, key: str, iv: str) -> str:
+def ofb_decrypt(ciphertext: bytes, key: str, iv: str) -> bytes:
     """RamadhanCipher ofb-mode decryption function
 
     ciphertext : text (in hex) to be decrypted
@@ -47,7 +49,8 @@ def ofb_decrypt(ciphertext: str, key: str, iv: str) -> str:
         plaintext += plaintext_byte
         # Perbarui IV dengan keystream yang baru saja dihasilkan
         previous_iv = previous_iv[1:] + int.to_bytes(keystream[0], 1, 'big')
-    return plaintext.decode('utf-8')
+    plaintext = plaintext.rstrip(b'\x00')
+    return plaintext
 
 # Test
 import string
@@ -68,18 +71,18 @@ if __name__ == '__main__':
     print("IV:\t\t", iv)
 
     start_time = time.time()
-    encrypted_text = ofb_encrypt(plain_text, key, iv)
+    encrypted_text = ofb_encrypt(bytes(plain_text, 'utf-8'), key, iv)
     end_time = time.time()
     print("\nEncrypting...")
     print("Encrypted hex:\t", bytes.hex(encrypted_text))
     print("Time to encrypt:\t", end_time - start_time)
 
     start_time = time.time()
-    decrypted_text = ofb_decrypt(bytes.hex(encrypted_text), key, iv)
+    decrypted_text = ofb_decrypt(encrypted_text, key, iv)
     end_time = time.time()
     print("\nDecrypting...")
-    print("Decrypted text:\t", decrypted_text)
+    print("Decrypted text:\t", decrypted_text.decode('utf-8'))
     print("Time to decrypt:\t", end_time - start_time)
 
-    print("\nResult:\t", plain_text == decrypted_text)
+    print("\nResult:\t", plain_text == decrypted_text.decode('utf-8'))
     print("===============================================")
