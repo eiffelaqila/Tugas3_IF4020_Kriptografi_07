@@ -43,7 +43,6 @@ S_BOXES = [
     [13, 2,  0,  5,  3,  12, 1,  4,  11, 15, 14, 7,  6,  9,  10,  8],
 ]
 
-# TODO: Dummy key generator
 def key_generator(key):
     round = 16
     length = 8
@@ -159,9 +158,9 @@ def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
         shifted_matrices.append([elmt for row in matrix for elmt in row])
 
     flatten_bits = [elem for sublist in shifted_matrices for subsublist in sublist for subsubsublist in subsublist for elem in subsubsublist]
+    shifted_bits = flatten_bits[1:] + flatten_bits[:1]
     
-    return [flatten_bits[i] for i in range(64)]
-
+    return [flatten_bits[i] ^ shifted_bits[i] for i in range(64)]
 
 # Test
 import os
