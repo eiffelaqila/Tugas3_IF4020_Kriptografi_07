@@ -39,7 +39,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get request body
       body = await request.json()
       # get plaintext and key from request body
-      plaintext, key, iv = body['plaintext'], body['key'], body['iv']
+      plaintext, key, iv = body['inputText'], body['key'], body['iv']
 
       start_time = time.time()
       ciphertext = cbc_encrypt(bytes(plaintext, 'utf-8'), key, iv)
@@ -86,7 +86,7 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get request body
       body = await request.json()
       # get ciphertext and key from request body
-      ciphertext, key, iv = body['ciphertext'], body['key'], body['iv']
+      ciphertext, key, iv = body['inputText'], body['key'], body['iv']
 
       start_time = time.time()
       plaintext = cbc_decrypt(bytes.fromhex(ciphertext), key, iv)

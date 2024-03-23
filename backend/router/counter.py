@@ -39,7 +39,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get request body
       body = await request.json()
       # get plaintext and key from request body
-      plaintext, key, counter = body['plaintext'], body['key'], body['counter']
+      plaintext, key, counter = body['inputText'], body['key'], body['counter']
 
       start_time = time.time()
       ciphertext = counter_encrypt(bytes(plaintext, 'utf-8'), key, counter)
@@ -86,7 +86,7 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get request body
       body = await request.json()
       # get ciphertext and key from request body
-      ciphertext, key, counter = body['ciphertext'], body['key'], body['counter']
+      ciphertext, key, counter = body['inputText'], body['key'], body['counter']
 
       start_time = time.time()
       plaintext = counter_decrypt(bytes.fromhex(ciphertext), key, counter)
