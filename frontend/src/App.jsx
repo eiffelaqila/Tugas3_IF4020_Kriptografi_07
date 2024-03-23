@@ -1,12 +1,12 @@
-import React, { useState } from "react";
 import axios from "axios";
-import { FaLock, FaUnlock, FaDownload } from "react-icons/fa"
+import React, { useState } from "react";
+import { FaDownload, FaLock, FaUnlock } from "react-icons/fa";
 
 function App() {
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   const [data, setData] = useState({
-    cipherMode: "ecb",
-    keySize: 128,
+    inputType: "text",
+    cipherMode: "ecb"
   })
   const [cipherType, setCipherType] = useState('');
 
@@ -27,9 +27,8 @@ function App() {
       data.counter = d.counter;
     }
 
-    data.keySize = d.keySize;
     data.key = d.key;
-    
+
     console.log(data);
     return data;
   }
@@ -69,8 +68,8 @@ function App() {
     const cipherType = e.nativeEvent.submitter.value;
     setCipherType(cipherType);
 
-    if (!isLengthValid(mappedData.key, mappedData.keySize)) {
-      setError(`Key should be ${mappedData.keySize/8} characters long`);
+    if (!isLengthValid(mappedData.key, 128)) {
+      setError(`Key should be 16 characters long`);
       return;
     }
 
@@ -82,7 +81,7 @@ function App() {
     setResult(undefined);
     setFileResult(undefined);
     setLoading(true);
-    
+
     try {
       if (data.inputType === "text") {
         const response = await axios.post(
@@ -101,23 +100,29 @@ function App() {
         setLoading(false);
         setError(undefined);
         setResult({
-          text: response.data,
-          base64: btoa(response.data),
+          text: response.data.ciphertext ?? response.data.plaintext,
+          time: response.data.time,
         });
         setFileResult(fileResponse);
       } else {
         const file = data.file;
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("key", mappedData.key);
+        if (['cbc', 'ofb', 'cfb'].includes(data.cipherMode)) {
+          formData.append("iv", mappedData.iv);
+        } else if (data.cipherMode === 'counter') {
+          formData.append("counter", mappedData.counter);
+        }
 
         const response = await axios.post(
-          `${backendUrl}/${data.cipherMode}/${cipherType}-file`,
+          `${backendUrl}/${data.cipherMode}/${cipherType}`,
           formData,
           {
             params: { ...mappedData },
             responseType: 'arraybuffer'
           },
-        );
+        )
 
         const binaryData = new Uint8Array(response.data);
 
@@ -132,7 +137,7 @@ function App() {
         setLoading(false);
         setError(undefined);
         setResult({
-          base64: "Too large to display.",
+          time: response.headers['x-response-time'],
         });
         setFileResult(fileResponse);
       }
@@ -190,15 +195,7 @@ function App() {
               </select>
             </div>
             <div>
-              <label htmlFor="keySize">Key Size</label>
-              <select id="keySize" defaultValue={128} onChange={(e) => handleChange(e)}>
-                <option value={128}>128</option>
-                <option value={192}>192</option>
-                <option value={256}>256</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="key">Key</label>
+              <label htmlFor="key">Key (Should be 128 bit/16 characters)</label>
               <input type="text" id="key" placeholder="Enter key" onChange={(e) => handleChange(e)} required />
             </div>
             <div className={!isCipherMode('ecb') && !isCipherMode('counter') ? "" : "hidden"}>
@@ -238,6 +235,12 @@ function App() {
           <div className="w-full py-2 my-4">
             <h2 className="text-xl font-bold text-gray-700">{cipherType === 'encrypt' ? 'Encrypted' : 'Decrypted'} Text</h2>
             <div className="w-full my-4">
+              <div className={`w-full my-4`}>
+                <h5 className="text-sm font-semibold text-gray-800">Time Taken</h5>
+                <div className="w-full p-4 overflow-x-scroll border border-gray-300 rounded-md max-h-lg bg-gray-50">
+                  <p className="text-base font-medium text-gray-800">{result.time} s</p>
+                </div>
+              </div>
               <div className={`w-full my-4 ${result.text ? "block" : "hidden"}`}>
                 <h5 className="text-sm font-semibold text-gray-800">Text Result</h5>
                 <div className="w-full p-4 overflow-x-scroll border border-gray-300 rounded-md max-h-lg bg-gray-50">
