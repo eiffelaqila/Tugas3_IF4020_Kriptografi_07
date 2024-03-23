@@ -14,18 +14,18 @@ router = APIRouter(
 async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
     try:
       if file:
-        #  get key and iv from request form data
+        #  get key and counter from request form data
         key = await request.form()
         key = key['key']
-        iv = await request.form()
-        iv = iv['iv']
+        counter = await request.form()
+        counter = counter['counter']
 
         # read file content
         content = await file.read()
         plaintext = content.decode('utf-8')
 
         # calculate ciphertext
-        ciphertext = counter_encrypt(plaintext, key, iv)
+        ciphertext = counter_encrypt(plaintext, key, counter)
         ciphertext = ciphertext.encode('utf-8')
 
         return StreamingResponse(
@@ -36,10 +36,10 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get request body
       body = await request.json()
       # get plaintext and key from request body
-      plaintext, key, iv = body['plaintext'], body['key'], body['iv']
+      plaintext, key, counter = body['plaintext'], body['key'], body['counter']
 
       return JSONResponse(
-          content={"ciphertext": counter_encrypt(plaintext, key, iv)},
+          content={"ciphertext": counter_encrypt(plaintext, key, counter)},
           status_code=200
       )
 
@@ -53,18 +53,18 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
 async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
     try:
       if file:
-        #  get key and iv from request form data
+        #  get key and counter from request form data
         key = await request.form()
         key = key['key']
-        iv = await request.form()
-        iv = iv['iv']
+        counter = await request.form()
+        counter = counter['counter']
 
         # read file content
         content = await file.read()
         ciphertext = content.decode('utf-8')
 
         # calculate plaintext
-        plaintext = counter_decrypt(ciphertext, key, iv)
+        plaintext = counter_decrypt(ciphertext, key, counter)
         plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
@@ -75,10 +75,10 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       # get request body
       body = await request.json()
       # get ciphertext and key from request body
-      ciphertext, key, iv = body['ciphertext'], body['key'], body['iv']
+      ciphertext, key, counter = body['ciphertext'], body['key'], body['counter']
 
       return JSONResponse(
-          content={"ciphertext": counter_decrypt(ciphertext, key, iv)},
+          content={"ciphertext": counter_decrypt(ciphertext, key, counter)},
           status_code=200
       )
 

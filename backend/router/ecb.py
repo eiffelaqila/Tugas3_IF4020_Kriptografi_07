@@ -13,13 +13,31 @@ router = APIRouter(
 @router.post("/encrypt")
 async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
     try:
+      if file:
+        #  get key and iv from request form data
+        key = await request.form()
+        key = key['key']
+
+        # read file content
+        content = await file.read()
+        ciphertext = content.decode('utf-8')
+
+        # calculate plaintext
+        plaintext = ecb_decrypt(ciphertext, key)
+        plaintext = plaintext.encode('utf-8')
+
+        return StreamingResponse(
+          iter([plaintext]),
+          media_type="application/octet-stream",
+        )
+
       # get request body
       body = await request.json()
       # get plaintext and key from request body
-      plaintext, key, iv = body['plaintext'], body['key'], body['iv']
+      plaintext, key = body['plaintext'], body['key']
 
       return JSONResponse(
-          content={"ciphertext": ecb_encrypt(plaintext, key, iv)},
+          content={"ciphertext": ecb_encrypt(plaintext, key)},
           status_code=200
       )
 
@@ -36,15 +54,13 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
         #  get key and iv from request form data
         key = await request.form()
         key = key['key']
-        iv = await request.form()
-        iv = iv['iv']
 
         # read file content
         content = await file.read()
         ciphertext = content.decode('utf-8')
 
         # calculate plaintext
-        plaintext = ecb_decrypt(ciphertext, key, iv)
+        plaintext = ecb_decrypt(ciphertext, key)
         plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
@@ -52,14 +68,13 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
           media_type="application/octet-stream",
         )
 
-
       # get request body
       body = await request.json()
       # get ciphertext and key from request body
-      ciphertext, key, iv = body['ciphertext'], body['key'], body['iv']
+      ciphertext, key = body['ciphertext'], body['key']
 
       return JSONResponse(
-          content={"ciphertext": ecb_decrypt(ciphertext, key, iv)},
+          content={"ciphertext": ecb_decrypt(ciphertext, key)},
           status_code=200
       )
 
