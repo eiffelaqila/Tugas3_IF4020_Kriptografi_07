@@ -2,7 +2,7 @@ def bytes_to_bitarray(bytes):
     bitarray = []
     for byte in bytes:
         bitarray += [int(i,2) for i in bin(byte).replace('0b', '').rjust(8, '0')]
-    
+
     return bitarray
 
 def bitarray_to_bytes(bitarray):

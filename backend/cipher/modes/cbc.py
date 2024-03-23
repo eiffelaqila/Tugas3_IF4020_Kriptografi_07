@@ -19,7 +19,7 @@ def cbc_decrypt_block(ciphertext_block: bytes, key: bytes, iv: bytes):
     return plaintext_block
 
 # Fungsi untuk enkripsi pesan menggunakan mode CBC
-def cbc_encrypt(plaintext: str, key: str, iv: str) -> bytes:
+def cbc_encrypt(plaintext: bytes, key: str, iv: str) -> bytes:
     """RamadhanCipher cbc-mode encryption function
 
     plaintext : text to be encrypted
@@ -27,11 +27,14 @@ def cbc_encrypt(plaintext: str, key: str, iv: str) -> bytes:
     iv        : initialization vector
     """
     ciphertext = b''
+    if (len(plaintext) % 16 > 0):
+        plaintext = plaintext + bytes(16 - len(plaintext) % 16)
+
     # Menginisialisasi IV untuk blok pertama
     previous_cipher_block = bytes(iv, 'utf-8')
     # Membagi pesan menjadi blok-blok 128 bit
     for i in range(0, len(plaintext), 16):
-        plaintext_block = bytes(plaintext[i:i+16], 'utf-8')
+        plaintext_block = plaintext[i:i+16]
         # Enkripsi setiap blok pesan dan tambahkan ke ciphertext
         ciphertext_block = cbc_encrypt_block(plaintext_block, bytes(key, 'utf-8'), previous_cipher_block)
         ciphertext += ciphertext_block
@@ -40,7 +43,7 @@ def cbc_encrypt(plaintext: str, key: str, iv: str) -> bytes:
     return ciphertext
 
 # Fungsi untuk dekripsi pesan menggunakan mode CBC
-def cbc_decrypt(ciphertext: str, key: str, iv: str) -> str:
+def cbc_decrypt(ciphertext: bytes, key: str, iv: str) -> bytes:
     """RamadhanCipher cbc-mode decryption function
 
     ciphertext : text (in hex) to be decrypted
@@ -48,8 +51,6 @@ def cbc_decrypt(ciphertext: str, key: str, iv: str) -> str:
     iv         : initialization vector
     """
     plaintext = b''
-    if type(ciphertext) == str:
-      ciphertext = bytes.fromhex(ciphertext)
     # Menginisialisasi IV untuk blok pertama
     previous_cipher_block = bytes(iv, 'utf-8')
     # Membagi ciphertext menjadi blok-blok 128 bit
@@ -60,7 +61,8 @@ def cbc_decrypt(ciphertext: str, key: str, iv: str) -> str:
         plaintext += plaintext_block
         # Update IV untuk blok berikutnya
         previous_cipher_block = ciphertext_block
-    return plaintext.decode('utf-8')
+    plaintext = plaintext.rstrip(b'\x00')
+    return plaintext
 
 # Test
 import string
@@ -81,18 +83,18 @@ if __name__ == '__main__':
     print("IV:\t\t", iv)
 
     start_time = time.time()
-    encrypted_text = cbc_encrypt(plain_text, key, iv)
+    encrypted_text = cbc_encrypt(bytes(plain_text, 'utf-8'), key, iv)
     end_time = time.time()
     print("\nEncrypting...")
     print("Encrypted hex:\t", bytes.hex(encrypted_text))
     print("Time to encrypt:\t", end_time - start_time)
 
     start_time = time.time()
-    decrypted_text = cbc_decrypt(bytes.hex(encrypted_text), key, iv)
+    decrypted_text = cbc_decrypt(encrypted_text, key, iv)
     end_time = time.time()
     print("\nDecrypting...")
-    print("Decrypted text:\t", decrypted_text)
+    print("Decrypted text:\t", decrypted_text.decode('utf-8'))
     print("Time to decrypt:\t", end_time - start_time)
 
-    print("\nResult:\t", plain_text == decrypted_text)
+    print("\nResult:\t", plain_text == decrypted_text.decode('utf-8'))
     print("===============================================")

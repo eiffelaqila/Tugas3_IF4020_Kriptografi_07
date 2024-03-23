@@ -1,4 +1,3 @@
-import base64
 import binascii
 import time
 from typing import Optional
@@ -23,7 +22,6 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
 
         # read file content
         plaintext = await file.read()
-        plaintext = plaintext.decode('utf-8')
 
         # calculate ciphertext
         start_time = time.time()
@@ -42,7 +40,7 @@ async def encrypt(request: Request, file: Optional[UploadFile] = File(None)):
       plaintext, key = body['plaintext'], body['key']
 
       start_time = time.time()
-      ciphertext = ecb_encrypt(plaintext, key)
+      ciphertext = ecb_encrypt(bytes(plaintext, 'utf-8'), key)
       end_time = time.time()
 
       return JSONResponse(
@@ -74,7 +72,6 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
         start_time = time.time()
         plaintext = ecb_decrypt(ciphertext, key)
         end_time = time.time()
-        plaintext = plaintext.encode('utf-8')
 
         return StreamingResponse(
           iter([plaintext]),
@@ -88,12 +85,12 @@ async def decrypt(request: Request, file: Optional[UploadFile] = File(None)):
       ciphertext, key = body['ciphertext'], body['key']
 
       start_time = time.time()
-      plaintext = ecb_decrypt(ciphertext, key)
+      plaintext = ecb_decrypt(bytes.fromhex(ciphertext), key)
       end_time = time.time()
 
       return JSONResponse(
           content={
-              "plaintext": plaintext,
+              "plaintext": plaintext.decode('utf-8'),
               "time": end_time - start_time
           },
           status_code=200

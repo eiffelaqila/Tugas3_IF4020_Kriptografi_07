@@ -57,9 +57,9 @@ def encrypt(plain_bytes: bytes, key: bytes) -> bytes:
     """
     # Konversi plain_bytes (16 bytes) menjadi array of bit (128 bit)
     plain_bits = bytes_to_bitarray(plain_bytes)
-    
+
     internal_keys = key_generator(key)
-    
+
     initial_permutation = [plain_bits[IP[i]] for i in range(128)]
     iteration_result = iteration_encrypt(initial_permutation, internal_keys)
     inverse_permutation = [iteration_result[INVERSE_IP[i]] for i in range(128)]
@@ -75,9 +75,9 @@ def decrypt(cipher_bytes: bytes, key: bytes) -> bytes:
     """
     # Konversi cipher_bytes (16 bytes) menjadi array of bit (128 bit)
     cipher_bits = bytes_to_bitarray(cipher_bytes)
-    
+
     internal_keys = key_generator(key)
-    
+
     initial_permutation = [cipher_bits[IP[i]] for i in range(128)]
     iteration_result = iteration_decrypt(initial_permutation, internal_keys)
     inverse_permutation = [iteration_result[INVERSE_IP[i]] for i in range(128)]
@@ -116,7 +116,7 @@ def iteration_decrypt(cipher_bitarray: list[int], internal_keys: list[list[int]]
         temp = L[:]
         L = [R[j] ^ f_result[j] for j in range(64)]
         R = temp[:]
-    
+
     return R + L
 
 def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
@@ -127,7 +127,7 @@ def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
     """
     # subbitarray 64-bit
     # internal_key 64-bit
-    r_ramadhan = [subbitarray[i] ^ bytes_to_bitarray(b'RAMADHAN')[i] ^ internal_key[i] for i in range(64)] 
+    r_ramadhan = [subbitarray[i] ^ bytes_to_bitarray(b'RAMADHAN')[i] ^ internal_key[i] for i in range(64)]
     s_boxes = []
 
     # divide into 16 boxes (4-bit per box) for substitution
@@ -152,14 +152,14 @@ def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
         matrix[1] = matrix[1][1:] + matrix[1][:1]
         # move element to last column by 2
         matrix[2] = matrix[2][2:] + matrix[2][:2]
-        
+
         matrix[3] = matrix[3][3:] + matrix[3][:3]
         # flatten matrix, put into shifted_matrices
         shifted_matrices.append([elmt for row in matrix for elmt in row])
 
     flatten_bits = [elem for sublist in shifted_matrices for subsublist in sublist for subsubsublist in subsublist for elem in subsubsublist]
     shifted_bits = flatten_bits[1:] + flatten_bits[:1]
-    
+
     return [flatten_bits[i] ^ shifted_bits[i] for i in range(64)]
 
 # Test
