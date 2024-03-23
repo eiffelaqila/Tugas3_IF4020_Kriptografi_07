@@ -1,3 +1,2 @@
 # cipher/__init__.py
-from .encryption import encrypt
-from .decryption import decrypt
+from .ramadhan_cipher import encrypt, decrypt

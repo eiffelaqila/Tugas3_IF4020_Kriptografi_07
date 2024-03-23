@@ -1,3 +1,5 @@
+from backend.utils import *
+
 # CONSTANTS
 IP = [
     57,  49,  41,  33,  25, 17, 9,  1,  59,  51,  43,  35,  27, 19, 11, 3,
@@ -40,19 +42,6 @@ S_BOXES = [
     [13, 2,  0,  5,  3,  12, 1,  4,  11, 15, 14, 7,  6,  9,  10,  8],
 ]
 
-def bytes_to_bitarray(bytes):
-    bitarray = []
-    for byte in bytes:
-        bitarray += [int(i,2) for i in bin(byte).replace('0b', '').rjust(8, '0')]
-    
-    return bitarray
-
-def bitarray_to_bytes(bitarray):
-    res = []
-    for i in range(len(bitarray)//8):
-        res.append(int(''.join(map(str, bitarray[i*8:(i+1)*8])), 2))
-    return bytes(res)
-
 # TODO: Dummy key generator
 def key_generator(key):
     key_bits = bytes_to_bitarray(key)
@@ -62,7 +51,12 @@ def key_generator(key):
     
     return [key1, key2, key1, key2, key1, key2, key1, key2, key1, key2, key1, key2, key1, key2, key1, key2]
 
-def encrypt(plain_bytes: bytes, key: any) -> bytes:
+def encrypt(plain_bytes: bytes, key: bytes) -> bytes:
+    """RamadhanCipher encryption function
+
+    plain_bytes : bytes to be encrypted (128 bit)
+    key         : external key (128 bit)
+    """
     # Konversi plain_bytes (16 bytes) menjadi array of bit (128 bit)
     plain_bits = bytes_to_bitarray(plain_bytes)
     
@@ -72,9 +66,15 @@ def encrypt(plain_bytes: bytes, key: any) -> bytes:
     iteration_result = iteration_encrypt(initial_permutation, internal_keys)
     inverse_permutation = [iteration_result[INVERSE_IP[i]] for i in range(128)]
 
+    # Konversi array of bit menjadi bytes kembali
     return bitarray_to_bytes(inverse_permutation)
 
-def decrypt(cipher_bytes: bytes, key) -> bytes:
+def decrypt(cipher_bytes: bytes, key: bytes) -> bytes:
+    """RamadhanCipher decryption function
+
+    cipher_bytes : bytes to be decrypted (128 bit)
+    key          : external key (128 bit)
+    """
     # Konversi cipher_bytes (16 bytes) menjadi array of bit (128 bit)
     cipher_bits = bytes_to_bitarray(cipher_bytes)
     
@@ -84,9 +84,15 @@ def decrypt(cipher_bytes: bytes, key) -> bytes:
     iteration_result = iteration_decrypt(initial_permutation, internal_keys)
     inverse_permutation = [iteration_result[INVERSE_IP[i]] for i in range(128)]
 
+    # Konversi array of bit menjadi bytes kembali
     return bitarray_to_bytes(inverse_permutation)
 
 def iteration_encrypt(plain_bitarray: list[int], internal_keys: list[list[int]]) -> bytes:
+    """RamadhanCipher enciphering function by 16-round Feistel network
+
+    plain_bitarray : array of bit to be enciphered (128 bit)
+    internal_keys  : list of internal keys (subkeys/round keys) in array of bit (64 bit each)
+    """
     L = plain_bitarray[:64]
     R = plain_bitarray[64:128]
 
@@ -99,6 +105,11 @@ def iteration_encrypt(plain_bitarray: list[int], internal_keys: list[list[int]])
     return R + L
 
 def iteration_decrypt(cipher_bitarray: list[int], internal_keys: list[list[int]]) -> bytes:
+    """RamadhanCipher deciphering function by 16-round Feistel network
+
+    cipher_bitarray : array of bit to be deciphered (128 bit)
+    internal_keys   : list of internal keys (subkeys/round keys) in array of bit (64 bit each)
+    """
     L = cipher_bitarray[:64]
     R = cipher_bitarray[64:128]
 
@@ -111,6 +122,11 @@ def iteration_decrypt(cipher_bitarray: list[int], internal_keys: list[list[int]]
     return R + L
 
 def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
+    """RamadhanCipher f function
+
+    subbitarray  : array of bit to be computed (64 bit)
+    internal_key : internal key (subkeys/round keys) in array of bit (64 bit)
+    """
     # subbitarray 64-bit
     # internal_key 64-bit
     r_ramadhan = [subbitarray[i] ^ bytes_to_bitarray(b'RAMADHAN')[i] ^ internal_key[i] for i in range(64)] 
@@ -143,8 +159,9 @@ def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
         # flatten matrix, put into shifted_matrices
         shifted_matrices.append([elmt for row in matrix for elmt in row])
 
-    # return flatten shifted_matrices
-    return [elem for sublist in shifted_matrices for subsublist in sublist for subsubsublist in subsublist for elem in subsubsublist]
+    flatten_bits = [elem for sublist in shifted_matrices for subsublist in sublist for subsubsublist in subsublist for elem in subsubsublist]
+    
+    return [flatten_bits[i] for i in range(64)]
 
 
 # Test
@@ -152,19 +169,26 @@ import os
 import time
 
 if __name__ == '__main__':
-    plain_text = os.urandom(16)
-    plain_bytes = bytes(plain_text)
-    
-    keys = os.urandom(16)
-    keys_bytes = bytes(keys)
+    plain_bytes = os.urandom(16)
+    key_bytes = os.urandom(16)
+
+    print("===== START RAMADHAN CIPHER TESTING =====")
+    print("Plain bytes:\t", plain_bytes)
+    print("Key bytes:\t", key_bytes)
 
     start_time = time.time()
-    print("PLAIN BYTES:", plain_bytes)
-    encrypted_bytes = encrypt(plain_bytes, keys_bytes)
-    print("ENCRYPTED BYTES:", encrypted_bytes)
-    decrypted_bytes = decrypt(encrypted_bytes, keys_bytes)
-    print("DECRYPTED BYTES:", decrypted_bytes)
-
+    encrypted_bytes = encrypt(plain_bytes, key_bytes)
     end_time = time.time()
-    print("VALID:", plain_bytes == decrypted_bytes)
-    print("TIME TAKEN:", end_time - start_time)
+    print("\nEncrypting...")
+    print("Encrypted bytes:\t", encrypted_bytes)
+    print("Time to encrypt:\t", end_time - start_time)
+
+    start_time = time.time()
+    decrypted_bytes = decrypt(encrypted_bytes, key_bytes)
+    end_time = time.time()
+    print("\nDecrypting...")
+    print("Decrypted bytes:\t", decrypted_bytes)
+    print("Time to decrypt:\t", end_time - start_time)
+
+    print("\nResult:\t", plain_bytes == decrypted_bytes)
+    print("=========================================")
