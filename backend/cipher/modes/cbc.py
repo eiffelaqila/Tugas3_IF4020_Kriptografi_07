@@ -76,7 +76,8 @@ if __name__ == '__main__':
 
     print("===== START CBC - RAMADHAN CIPHER TESTING =====")
     print("Plain text:\t", plain_text)
-    print("Key:\t", key)
+    print("Key:\t\t", key)
+    print("IV:\t\t", iv)
 
     start_time = time.time()
     encrypted_text = cbc_encrypt(plain_text, key, iv)
