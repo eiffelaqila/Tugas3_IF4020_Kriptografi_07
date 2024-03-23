@@ -1,4 +1,5 @@
 from backend.utils import *
+from backend.cipher.key_expansion import key_expansion
 
 # CONSTANTS
 IP = [
@@ -44,12 +45,10 @@ S_BOXES = [
 
 # TODO: Dummy key generator
 def key_generator(key):
-    key_bits = bytes_to_bitarray(key)
-    
-    key1 = key_bits[:64]
-    key2 = key_bits[64:128]
-    
-    return [key1, key2, key1, key2, key1, key2, key1, key2, key1, key2, key1, key2, key1, key2, key1, key2]
+    round = 16
+    length = 8
+    expanded_key = key_expansion(key, round, length)
+    return [bytes_to_bitarray(expanded_key[i:i+length]) for i in range(0, len(expanded_key), length)]
 
 def encrypt(plain_bytes: bytes, key: bytes) -> bytes:
     """RamadhanCipher encryption function
