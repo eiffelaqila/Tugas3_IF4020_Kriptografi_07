@@ -43,11 +43,18 @@ S_BOXES = [
     [13, 2,  0,  5,  3,  12, 1,  4,  11, 15, 14, 7,  6,  9,  10,  8],
 ]
 
+P_BOX = [
+    47, 12, 55, 18, 13,  2, 51, 42, 32, 35, 52, 26, 44, 58, 41, 25,
+    50, 27, 60,  3, 37, 21, 59, 38, 63,  6, 46, 17, 45, 22, 33, 29,
+    8, 61,  9, 62, 49, 10, 48, 53, 57, 54, 14, 24, 56, 20, 16,  1,
+    39, 11, 19,  4, 34, 30, 43, 40, 15, 36,  0,  5, 23, 28,  7, 31
+]
+
 def key_generator(key):
     round = 16
     length = 8
     expanded_key = key_expansion(key, round, length)
-    return [bytes_to_bitarray(expanded_key[i:i+length]) for i in range(0, len(expanded_key), length)]
+    return [expanded_key[i:i+length] for i in range(0, len(expanded_key), length)]
 
 def encrypt(plain_bytes: bytes, key: bytes) -> bytes:
     """RamadhanCipher encryption function
@@ -85,7 +92,7 @@ def decrypt(cipher_bytes: bytes, key: bytes) -> bytes:
     # Konversi array of bit menjadi bytes kembali
     return bitarray_to_bytes(inverse_permutation)
 
-def iteration_encrypt(plain_bitarray: list[int], internal_keys: list[list[int]]) -> bytes:
+def iteration_encrypt(plain_bitarray: list[int], internal_keys: list[bytes]) -> bytes:
     """RamadhanCipher enciphering function by 16-round Feistel network
 
     plain_bitarray : array of bit to be enciphered (128 bit)
@@ -102,7 +109,7 @@ def iteration_encrypt(plain_bitarray: list[int], internal_keys: list[list[int]])
 
     return R + L
 
-def iteration_decrypt(cipher_bitarray: list[int], internal_keys: list[list[int]]) -> bytes:
+def iteration_decrypt(cipher_bitarray: list[int], internal_keys: list[bytes]) -> bytes:
     """RamadhanCipher deciphering function by 16-round Feistel network
 
     cipher_bitarray : array of bit to be deciphered (128 bit)
@@ -119,30 +126,35 @@ def iteration_decrypt(cipher_bitarray: list[int], internal_keys: list[list[int]]
 
     return R + L
 
-def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
+def f(subbitarray: list[int], internal_key: bytes) -> list[int]:
     """RamadhanCipher f function
 
     subbitarray  : array of bit to be computed (64 bit)
     internal_key : internal key (subkeys/round keys) in array of bit (64 bit)
     """
     # XOR Operation: subbitarray ^ b'RAMADHAN' ^ internal_key
-    r_ramadhan = bytes_to_bitarray(bytes(a ^ b ^ c for a, b, c in zip(bitarray_to_bytes(subbitarray), b'RAMADHAN', bitarray_to_bytes(internal_key))))
+    r_ramadhan = bytes(a ^ b ^ c for a, b, c in zip(bitarray_to_bytes(subbitarray), b'RAMADHAN', internal_key))
 
-    # S-Box substitution to 16 integers
-    s_boxes = [S_BOXES[i][int(''.join(map(str, r_ramadhan[i*4 : (i+1)*4])), 2)] for i in range(16)]
-
-    # Reshape the substituted values into a 4x4 matrix
-    shifted_matrix = [s_boxes[i*4 : (i+1)*4] for i in range(4)]
+    # Convert every 4 bits into a integer for S-Box substitution
+    r_ramadhan_int_every_4_bit = []
+    for byte in r_ramadhan:
+        # Extract 4 bits at a time and convert to integer
+        r_ramadhan_int_every_4_bit.extend([(byte >> (4 * i)) & 0b1111 for i in range(1, -1, -1)])
+    
+    # S-Box substitution to 16 integers and reshape into a 4x4 matrix
+    matrix = [[], [], [], []]
+    for i in range(16):
+        matrix[i // 4].append(S_BOXES[i][r_ramadhan_int_every_4_bit[i]])
 
     # Apply the ShiftRows operation
-    for i, row in enumerate(shifted_matrix):
-        shifted_matrix[i] = row[i:] + row[:i]
+    for i, row in enumerate(matrix):
+        matrix[i] = row[i:] + row[:i]
 
     # Flatten the matrix and convert into bit array
-    flatten_matrix_bitarray = [int(bit) for row in shifted_matrix for num in row for bit in format(num, '04b')]
+    flatten_matrix_bitarray = [int(bit) for row in matrix for num in row for bit in format(num, '04b')]
 
     # XOR with shifted matrix
-    result_xor = [(bit ^ flatten_matrix_bitarray[(i + 1) % len(flatten_matrix_bitarray)]) for i, bit in enumerate(flatten_matrix_bitarray)]
+    result_xor = [flatten_matrix_bitarray[P_BOX[i]] for i in range(64)]
 
     return result_xor
 
