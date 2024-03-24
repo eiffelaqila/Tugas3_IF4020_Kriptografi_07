@@ -1,12 +1,5 @@
 def bytes_to_bitarray(bytes):
-    bitarray = []
-    for byte in bytes:
-        bitarray += [int(i,2) for i in bin(byte).replace('0b', '').rjust(8, '0')]
-
-    return bitarray
+    return [int(i) for byte in bytes for i in format(byte, '08b')]
 
 def bitarray_to_bytes(bitarray):
-    res = []
-    for i in range(len(bitarray)//8):
-        res.append(int(''.join(map(str, bitarray[i*8:(i+1)*8])), 2))
-    return bytes(res)
+    return bytes(int(''.join(map(str, bitarray[i:i+8])), 2) for i in range(0, len(bitarray), 8))

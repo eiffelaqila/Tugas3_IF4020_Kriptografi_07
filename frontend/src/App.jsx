@@ -242,7 +242,7 @@ function App() {
                 </div>
               </div>
               <div className={`w-full my-4 ${result.text ? "block" : "hidden"}`}>
-                <h5 className="text-sm font-semibold text-gray-800">Text Result</h5>
+                <h5 className="text-sm font-semibold text-gray-800">Text Result (or Hex Result for Ciphertext)</h5>
                 <div className="w-full p-4 overflow-x-scroll border border-gray-300 rounded-md max-h-lg bg-gray-50">
                   <p className="text-base font-medium text-gray-800">{result.text}</p>
                 </div>

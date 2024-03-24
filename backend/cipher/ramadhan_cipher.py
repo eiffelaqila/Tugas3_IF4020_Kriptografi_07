@@ -125,42 +125,26 @@ def f(subbitarray: list[int], internal_key: list[int]) -> list[int]:
     subbitarray  : array of bit to be computed (64 bit)
     internal_key : internal key (subkeys/round keys) in array of bit (64 bit)
     """
-    # subbitarray 64-bit
-    # internal_key 64-bit
-    r_ramadhan = [subbitarray[i] ^ bytes_to_bitarray(b'RAMADHAN')[i] ^ internal_key[i] for i in range(64)]
-    s_boxes = []
+    # XOR Operation: subbitarray ^ b'RAMADHAN' ^ internal_key
+    r_ramadhan = bytes_to_bitarray(bytes(a ^ b ^ c for a, b, c in zip(bitarray_to_bytes(subbitarray), b'RAMADHAN', bitarray_to_bytes(internal_key))))
 
-    # divide into 16 boxes (4-bit per box) for substitution
-    for i in range(16):
-        four_bits = r_ramadhan[i*4 : (i+1)*4]
-        # substitute the four_bits with element in S_BOXES
-        elem_on_sbox = S_BOXES[i][int(''.join(map(str, four_bits)), 2)]
-        s_boxes.append([int(i,2) for i in bin(elem_on_sbox).replace('0b', '').rjust(4, '0')])
+    # S-Box substitution to 16 integers
+    s_boxes = [S_BOXES[i][int(''.join(map(str, r_ramadhan[i*4 : (i+1)*4])), 2)] for i in range(16)]
 
-    # join into s_boxes into 4 elements (16-bit)
-    # [s_boxes[0],s_boxes[4],s_boxes[8],s_boxes[12]], ...
-    four_by_four_matrices = [[], [], [], []]
-    for i in range(16):
-        four_by_four_matrices[i % 4].append(s_boxes[i])
+    # Reshape the substituted values into a 4x4 matrix
+    shifted_matrix = [s_boxes[i*4 : (i+1)*4] for i in range(4)]
 
-    # AES shift rows for every four_by_four_matrices
-    # for each matrices of 16-bit (4x4)
-    shifted_matrices = []
-    for i in range(4):
-        matrix = [four_by_four_matrices[j:j+4] for j in range(0, 16, 4)]
-        # move element to last column by 1
-        matrix[1] = matrix[1][1:] + matrix[1][:1]
-        # move element to last column by 2
-        matrix[2] = matrix[2][2:] + matrix[2][:2]
+    # Apply the ShiftRows operation
+    for i, row in enumerate(shifted_matrix):
+        shifted_matrix[i] = row[i:] + row[:i]
 
-        matrix[3] = matrix[3][3:] + matrix[3][:3]
-        # flatten matrix, put into shifted_matrices
-        shifted_matrices.append([elmt for row in matrix for elmt in row])
+    # Flatten the matrix and convert into bit array
+    flatten_matrix_bitarray = [int(bit) for row in shifted_matrix for num in row for bit in format(num, '04b')]
 
-    flatten_bits = [elem for sublist in shifted_matrices for subsublist in sublist for subsubsublist in subsublist for elem in subsubsublist]
-    shifted_bits = flatten_bits[1:] + flatten_bits[:1]
+    # XOR with shifted matrix
+    result_xor = [(bit ^ flatten_matrix_bitarray[(i + 1) % len(flatten_matrix_bitarray)]) for i, bit in enumerate(flatten_matrix_bitarray)]
 
-    return [flatten_bits[i] ^ shifted_bits[i] for i in range(64)]
+    return result_xor
 
 # Test
 import os
