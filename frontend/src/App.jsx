@@ -178,7 +178,7 @@ function App() {
             </div>
             <div className={isType("text") ? "" : "hidden"}>
               <label htmlFor="inputText">Plaintext / Ciphertext</label>
-              <input type="text" id="inputText" placeholder="Enter text" onChange={(e) => handleChange(e)} required={data.inputType === "text"} />
+              <textarea id="inputText" placeholder="Enter text" onChange={(e) => handleChange(e)} rows="8" cols="50" required={data.inputType === "text"} />
             </div>
             <div className={isType("file") ? "" : "hidden"}>
               <label htmlFor="file">File</label>
@@ -244,7 +244,7 @@ function App() {
               <div className={`w-full my-4 ${result.text ? "block" : "hidden"}`}>
                 <h5 className="text-sm font-semibold text-gray-800">Text Result (or Hex Result for Ciphertext)</h5>
                 <div className="w-full p-4 overflow-x-scroll border border-gray-300 rounded-md max-h-lg bg-gray-50">
-                  <p className="text-base font-medium text-gray-800">{result.text}</p>
+                  <p className="text-base font-medium text-gray-800 whitespace-pre">{result.text}</p>
                 </div>
               </div>
             </div>
